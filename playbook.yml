@@ -104,3 +104,17 @@
 
   - name: clone vim config
     git: repo=https://github.com/luan/vimfiles dest=~/.vim
+
+  - name: check kernel version
+    command: uname -r
+    register: kernel_version
+
+  - name: fancy new kernel
+    become: yes
+    become_method: sudo
+    apt: deb={{item}}
+    with_items:
+    - http://kernel.ubuntu.com/~kernel-ppa/mainline/v4.12-rc7/linux-headers-4.12.0-041200rc7_4.12.0-041200rc7.201706252231_all.deb
+    - http://kernel.ubuntu.com/~kernel-ppa/mainline/v4.12-rc7/linux-headers-4.12.0-041200rc7-generic_4.12.0-041200rc7.201706252231_amd64.deb
+    - http://kernel.ubuntu.com/~kernel-ppa/mainline/v4.12-rc7/linux-image-4.12.0-041200rc7-generic_4.12.0-041200rc7.201706252231_amd64.deb
+    when: kernel_version.stdout != "4.12.0-041200rc7-generic"
