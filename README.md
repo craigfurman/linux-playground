@@ -1,4 +1,4 @@
-# linux-training VM
+# linux-playground
 
 ## Usage
 
