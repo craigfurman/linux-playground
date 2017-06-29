@@ -1,5 +1,10 @@
 # linux-playground
 
+## Host requirements
+
+1. Vagrant.
+1. On macOS hosts, Homebrew.
+
 ## Usage
 
 1. Clone this.

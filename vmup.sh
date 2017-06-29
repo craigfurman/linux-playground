@@ -21,8 +21,6 @@ install_ansible__Linux() {
 }
 
 install_ansible__Darwin() {
-  log "installing/upgrading Homebrew"
-  /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
   brew install ansible
 }
 
