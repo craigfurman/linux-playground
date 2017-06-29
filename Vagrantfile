@@ -55,7 +55,7 @@ Vagrant.configure("2") do |config|
   end
 
   config.vm.provision "shell" do |s|
-    s.inline = "sudo apt-get install -y python-dev"
+    s.inline = "sudo apt-get update && sudo apt-get install -y python-dev"
   end
 
   config.vm.provision "ansible" do |ansible|
