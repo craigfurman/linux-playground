@@ -43,7 +43,7 @@ fi
 
 (
 cd "$(dirname "$0")"
-vagrant up --provision
+vagrant up --provision --provider virtualbox
 )
 
 log "Don't forget to read the post install steps for your OS in README.md."
