@@ -35,13 +35,34 @@ log() {
 log "Oh boy, here I go installin' again!"
 
 if ! which ansible-playbook > /dev/null 2>&1 ; then
-  echo "ansible-playbook not found on \$PATH, installing"
+  log "ansible-playbook not found on \$PATH, installing"
   unix install_ansible
+fi
+
+if ! vagrant plugin list | grep vbguest > /dev/null 2>&1 ; then
+  log "installing vagrant-vbguest plugin..."
+  vagrant plugin install vagrant-vbguest
 fi
 
 (
 cd "$(dirname "$0")"
 vagrant up --provision --provider virtualbox
+
+if ! vagrant ssh -c 'uname -r | grep 4.12' >/dev/null 2>&1 ; then
+  log "Old kernel running, reinstalling guest additions"
+
+  set +e
+  vagrant reload
+  set -e
+
+  if [ ! -f cache/guest_additions.iso ]; then
+    mkdir -p cache
+    wget -O cache/guest_additions.iso https://www.virtualbox.org/download/testcase/VBoxGuestAdditions_5.1.23-116467.iso
+  fi
+
+  vagrant vbguest --do install
+  vagrant reload
+fi
 )
 
 log "Don't forget to read the post install steps for your OS in README.md."

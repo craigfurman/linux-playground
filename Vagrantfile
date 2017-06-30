@@ -62,6 +62,9 @@ Vagrant.configure("2") do |config|
     ansible.playbook = "playbook.yml"
   end
 
+  config.vbguest.iso_path = "cache/guest_additions.iso"
+  config.vbguest.auto_update = false
+
   # View the documentation for the provider you are using for more
   # information on available options.
 
