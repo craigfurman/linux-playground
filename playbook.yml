@@ -16,6 +16,8 @@
     become_method: sudo
     apt: name={{ item }} state=latest update_cache=yes
     with_items:
+    - automake
+    - autotools-dev
     - build-essential
     - curl
     - debootstrap
@@ -26,6 +28,7 @@
     - libcap-dev
     - libncurses5-dev
     - libseccomp-dev
+    - libtool
     - neovim
     - python-dev
     - python-pip
@@ -33,6 +36,7 @@
     - python3-pip
     - silversearcher-ag
     - tree
+    - valgrind
     - wget
     - zsh
     # For tmux
@@ -51,12 +55,6 @@
     become: yes
     become_method: sudo
     user: name={{ansible_env.USER}} shell=/bin/zsh
-
-  - name: copy zshrc
-    copy: src=config/zshrc dest=~/.zshrc mode=0600 force=yes
-
-  - name: copy git config
-    copy: src=config/gitconfig dest=~/.gitconfig mode=0600 force=yes
 
   - name: ensure downloads directory exists
     file: path={{downloads_dir}} state=directory
@@ -86,8 +84,13 @@
     make: target=install chdir={{downloads_dir}}/tmux-2.5
     when: tmux_version.stdout != "tmux 2.5"
 
-  - name: copy tmux.conf
-    copy: src=config/tmux.conf dest=~/.tmux.conf mode=0600 force=yes
+  - name: copy config files
+    copy: src={{item.src}} dest={{item.dst}} mode=0664 force=yes
+    with_items:
+    - {src: config/tmux.conf, dst: ~/.tmux.conf}
+    - {src: config/zshrc, dst: ~/.zshrc}
+    - {src: config/gitconfig, dst: ~/.gitconfig}
+    - {src: config/vimrc.local.plugins, dst: ~/.vimrc.local.plugins}
 
   - name: get TPM
     git:
