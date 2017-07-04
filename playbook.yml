@@ -39,6 +39,7 @@
     - tree
     - util-linux
     - valgrind
+    - vim-nox
     - wget
     - zsh
     # For tmux
