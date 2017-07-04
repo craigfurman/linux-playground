@@ -9,7 +9,7 @@
     apt_repository: repo={{ item }}
     with_items:
     - ppa:git-core/ppa
-    - ppa:neovim-ppa/stable
+    - ppa:neovim-ppa/unstable
 
   - name: install apt packages
     become: yes
@@ -37,6 +37,7 @@
     - shellcheck
     - silversearcher-ag
     - tree
+    - util-linux
     - valgrind
     - wget
     - zsh
