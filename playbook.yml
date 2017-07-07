@@ -30,6 +30,7 @@
     - libseccomp-dev
     - libtool
     - neovim
+    - pkg-config
     - python-dev
     - python-pip
     - python3-dev
