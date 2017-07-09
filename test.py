@@ -5,6 +5,8 @@ from bcc import BPF
 import ctypes as ct
 import socket
 import struct
+import os
+from time import sleep
 
 bpf_text = """
 #include <uapi/linux/ptrace.h>
@@ -15,11 +17,8 @@ bpf_text = """
 #include <linux/netdevice.h>
 #include <bcc/proto.h>
 
-BPF_PERF_OUTPUT(tx_events);
-
 struct event_t {
   u32 pid;
-  u64 timestamp;
 
   unsigned char	eth_src[ETH_ALEN];
   unsigned char	eth_dst[ETH_ALEN];
@@ -33,6 +32,9 @@ struct event_t {
   int  device_ifindex;
   char device_name[IFNAMSIZ];
 };
+
+const int MAX_FLOWS=128;
+BPF_HASH(tx_flows, struct event_t, u64, MAX_FLOWS);
 
 int kprobe__dev_hard_start_xmit(
         struct pt_regs* ctx, struct sk_buff* skb, struct net_device* dev)
@@ -48,7 +50,6 @@ int kprobe__dev_hard_start_xmit(
 
   struct event_t event = {};
   event.pid = bpf_get_current_pid_tgid();
-  event.timestamp = bpf_ktime_get_ns();
 
   memcpy(event.eth_src, eth_hdr.h_source, sizeof(event.eth_src));
   memcpy(event.eth_dst, eth_hdr.h_dest, sizeof(event.eth_dst));
@@ -62,7 +63,9 @@ int kprobe__dev_hard_start_xmit(
   event.device_ifindex = dev->ifindex;
   bpf_probe_read(&event.device_name, sizeof(event.device_name), dev->name);
 
-  tx_events.perf_submit(ctx, &event, sizeof(event));
+  u64 zero = 0;
+  u64* flow_count = tx_flows.lookup_or_init(&event, &zero);
+  (*flow_count)++;
 
   return 0;
 };
@@ -76,7 +79,6 @@ ETH_ALEN = 6 # upapi/linux/if_ether.h
 IFNAMSIZ = 16 # uapi/linux/if.h
 class Event(ct.Structure):
     _fields_ = [("pid", ct.c_ulong),
-                ("timestamp", ct.c_ulonglong),
                 ("eth_src", ct.c_ubyte * ETH_ALEN),
                 ("eth_dst", ct.c_ubyte * ETH_ALEN),
                 ("ip_src", ct.c_uint),
@@ -105,14 +107,11 @@ def ethAddrToString(ethAddr):
 
 start = 0
 
-def print_event(cpu, data, size):
+def print_event(count, event):
     global start
-    event = ct.cast(data, ct.POINTER(Event)).contents
-    if start == 0:
-            start = event.timestamp
-    time_s = (float(event.timestamp - start)) / 1000000000
-    print("%7.4f %17s (%d)   %s (%d)    %s %s -> %s %s" % (
-            time_s, event.comm, event.pid,
+    print("%d %17s (%d)   %s (%d)    %s %s -> %s %s" % (
+            count,
+            event.comm, event.pid,
             event.device_name, event.device_ifindex,
             ethAddrToString(event.eth_src),
             addrToString(event.ip_src, event.port_src),
@@ -120,8 +119,13 @@ def print_event(cpu, data, size):
             addrToString(event.ip_dst, event.port_dst),
     ))
 
-# loop with callback to print_event
-b["tx_events"].open_perf_buffer(print_event)
-while 1:
-    b.kprobe_poll()
-
+# sleep until Ctrl-C
+try:
+        while 1:
+                os.system("clear")
+                tx_flows = b.get_table("tx_flows")
+                for k, v in tx_flows.items():
+                        print_event(v.value, k)
+                sleep(1)
+except KeyboardInterrupt:
+    pass
