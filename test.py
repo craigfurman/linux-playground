@@ -79,13 +79,18 @@ ETH_ALEN = 6 # upapi/linux/if_ether.h
 IFNAMSIZ = 16 # uapi/linux/if.h
 class Event(ct.Structure):
     _fields_ = [("pid", ct.c_ulong),
+
                 ("eth_src", ct.c_ubyte * ETH_ALEN),
                 ("eth_dst", ct.c_ubyte * ETH_ALEN),
-                ("ip_src", ct.c_uint),
-                ("ip_dst", ct.c_uint),
-                ("port_src", ct.c_ushort),
-                ("port_dst", ct.c_ushort),
+
+                ("ip_src", ct.c_uint32),
+                ("ip_dst", ct.c_uint32),
+
+                ("port_src", ct.c_uint16),
+                ("port_dst", ct.c_int16),
+
                 ("comm", ct.c_char * TASK_COMM_LEN),
+
                 ("device_ifindex", ct.c_int),
                 ("device_name", ct.c_char * IFNAMSIZ),
                 ]
@@ -109,7 +114,7 @@ start = 0
 
 def print_event(count, event):
     global start
-    print("%d %17s (%d)   %s (%d)    %s %s -> %s %s" % (
+    print("%3d %17s (%6d)   %16s (%3d)    %s %16s -> %s %16s" % (
             count,
             event.comm, event.pid,
             event.device_name, event.device_ifindex,
@@ -124,8 +129,9 @@ try:
         while 1:
                 os.system("clear")
                 tx_flows = b.get_table("tx_flows")
-                for k, v in tx_flows.items():
-                        print_event(v.value, k)
+                for event, count in tx_flows.items():
+                    if event.port_src != 22:
+                        print_event(count.value, event)
                 sleep(1)
 except KeyboardInterrupt:
     pass
