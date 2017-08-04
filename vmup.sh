@@ -57,7 +57,7 @@ if ! vagrant ssh -c 'uname -r | grep 4.12' >/dev/null 2>&1 ; then
 
   if [ ! -f cache/guest_additions.iso ]; then
     mkdir -p cache
-    wget -O cache/guest_additions.iso https://www.virtualbox.org/download/testcase/VBoxGuestAdditions_5.1.23-116467.iso
+    wget -O cache/guest_additions.iso https://www.virtualbox.org/download/testcase/VBoxGuestAdditions_5.1.25-117179.iso
   fi
 
   vagrant vbguest --do install
