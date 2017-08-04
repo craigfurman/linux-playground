@@ -1,0 +1,6 @@
+[submodule "projects/linux"]
+	path = projects/linux
+	url = https://github.com/torvalds/linux
+[submodule "projects/bcc"]
+	path = projects/bcc
+	url = https://github.com/iovisor/bcc
