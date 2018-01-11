@@ -3,19 +3,23 @@
   vars:
     downloads_dir: /tmp/downloads
   tasks:
+  - name: use whole partition
+    become: true
+    become_method: sudo
+    command: resize2fs /dev/sda1
+
   - name: add apt repositories
-    become: yes
+    become: true
     become_method: sudo
     apt_repository: repo={{ item }}
     with_items:
     - ppa:git-core/ppa
-    - ppa:neovim-ppa/unstable
-    - deb [trusted=yes] https://repo.iovisor.org/apt/xenial xenial-nightly main
+    - deb [trusted=true] https://repo.iovisor.org/apt/xenial xenial-nightly main
 
   - name: install apt packages
-    become: yes
+    become: true
     become_method: sudo
-    apt: name={{ item }} state=latest update_cache=yes
+    apt: name={{ item }} state=latest update_cache=true
     with_items:
     - automake
     - autotools-dev
@@ -38,16 +42,13 @@
     - python3-pip
     - shellcheck
     - silversearcher-ag
+    - tmux
     - tree
     - util-linux
     - valgrind
     - vim-nox
     - wget
     - zsh
-    # For tmux
-    - libevent-dev
-    - bcc-tools
-    - libbcc-examples
 
   - name: install neovim pip package
     pip: name=neovim executable=/usr/bin/pip
@@ -59,40 +60,15 @@
     git: repo=https://github.com/robbyrussell/oh-my-zsh.git dest=~/.oh-my-zsh
 
   - name: set zsh as default shell
-    become: yes
+    become: true
     become_method: sudo
     user: name={{ansible_env.USER}} shell=/bin/zsh
 
   - name: ensure downloads directory exists
     file: path={{downloads_dir}} state=directory
 
-  - name: download tmux
-    get_url: url=https://github.com/tmux/tmux/releases/download/2.5/tmux-2.5.tar.gz dest={{downloads_dir}}/tmux-2.5.tar.gz
-
-  - name: extract tmux
-    unarchive: copy=no src={{downloads_dir}}/tmux-2.5.tar.gz dest={{downloads_dir}} creates={{downloads_dir}}/tmux-2.5
-
-  - name: check tmux installed
-    command: tmux -V
-    register: tmux_version
-    failed_when: tmux_version.rc != 0 and tmux_version.rc != 127
-
-  - name: configure tmux
-    command: ./configure chdir={{downloads_dir}}/tmux-2.5
-    when: tmux_version.stdout != "tmux 2.5"
-
-  - name: compile tmux
-    make: chdir={{downloads_dir}}/tmux-2.5
-    when: tmux_version.stdout != "tmux 2.5"
-
-  - name: install tmux
-    become: yes
-    become_method: sudo
-    make: target=install chdir={{downloads_dir}}/tmux-2.5
-    when: tmux_version.stdout != "tmux 2.5"
-
   - name: copy config files
-    copy: src={{item.src}} dest={{item.dst}} mode=0664 force=yes
+    copy: src={{item.src}} dest={{item.dst}} mode=0664 force=true
     with_items:
     - {src: config/tmux.conf, dst: ~/.tmux.conf}
     - {src: config/zshrc, dst: ~/.zshrc}
@@ -105,26 +81,12 @@
       dest: ~/.tmux/plugins/tpm
 
   - name: download go
-    get_url: url=https://storage.googleapis.com/golang/go1.8.3.linux-amd64.tar.gz dest={{downloads_dir}}/go.tar.gz
+    get_url: url=https://storage.googleapis.com/golang/go1.9.2.linux-amd64.tar.gz dest={{downloads_dir}}/go.tar.gz
 
   - name: extract go
-    become: yes
+    become: true
     become_method: sudo
     unarchive: copy=no src={{downloads_dir}}/go.tar.gz dest=/usr/local creates=/usr/local/go
 
   - name: clone vim config
     git: repo=https://github.com/luan/vimfiles dest=~/.vim
-
-  - name: check kernel version
-    command: uname -r
-    register: kernel_version
-
-  - name: fancy new kernel
-    become: yes
-    become_method: sudo
-    apt: deb={{item}}
-    with_items:
-    - http://kernel.ubuntu.com/~kernel-ppa/mainline/v4.12/linux-headers-4.12.0-041200_4.12.0-041200.201707022031_all.deb
-    - http://kernel.ubuntu.com/~kernel-ppa/mainline/v4.12/linux-headers-4.12.0-041200-generic_4.12.0-041200.201707022031_amd64.deb
-    - http://kernel.ubuntu.com/~kernel-ppa/mainline/v4.12/linux-image-4.12.0-041200-generic_4.12.0-041200.201707022031_amd64.deb
-    when: kernel_version.stdout != "4.12.0-041200-generic"
