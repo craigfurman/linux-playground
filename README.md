@@ -2,8 +2,9 @@
 
 ## Host requirements
 
-1. Vagrant, Virtualbox.
-1. On macOS hosts, Homebrew.
+1. Vagrant
+1. Virtualbox
+1. Ansible
 
 ## Usage
 
