@@ -1,5 +1,12 @@
 # linux-playground
 
+**This repository is no longer maintained**. I no longer use this and will no longer be
+maintaining it. If you are interested in sharing contributions, please see whichever
+[fork](https://github.com/craigfurman/linux-playground/network/members) looks to be the
+most up-to-date. At the time of writing this looks like
+https://github.com/masters-of-cats/linux-playground. If you want to see my dotfiles /
+laptop config for Linux and macOS, please see https://github.com/craigfurman/ansible-home.
+
 ## Host requirements
 
 1. Vagrant
